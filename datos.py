@@ -4,21 +4,27 @@ import streamlit as st
 import matplotlib.pyplot as plt
 import io
 
+# Configuración para diseño adaptable
+st.set_page_config(layout="wide")
+
 def obtener_datos_paises():
+    """Obtiene los datos de países desde la API REST."""
     url = 'https://raw.githubusercontent.com/jxnscv/Programacion/main/all.json'
-    respuesta = requests.get(url)
-    if respuesta.status_code == 200:
+    try:
+        respuesta = requests.get(url, timeout=10)
+        respuesta.raise_for_status()
         return respuesta.json()
-    else:
-        st.error(f'Error: {respuesta.status_code}')
+    except requests.exceptions.RequestException as e:
+        st.error(f"Error al conectarse a la API: {e}")
         return []
 
 def convertir_a_dataframe(paises):
+    """Convierte la lista de países en un DataFrame."""
     datos = []
     for pais in paises:
         datos.append({
-            'Nombre Común': pais.get('name', {}).get('common', 'No disponible'),
-            'Región Geográfica': pais.get('region', 'No disponible'),
+            'Nombre Común': pais.get('name', {}).get('common', None),
+            'Región Geográfica': pais.get('region', None),
             'Población Total': pais.get('population', 0),
             'Área en km²': pais.get('area', 0),
             'Número de Fronteras': len(pais.get('borders', [])),
@@ -27,28 +33,31 @@ def convertir_a_dataframe(paises):
         })
     return pd.DataFrame(datos)
 
-
+# Obtención y procesamiento de datos
 paises = obtener_datos_paises()
 df = convertir_a_dataframe(paises)
 
-st.title('Análisis de Datos de Países')
+# Título principal
+st.title('Análisis de Datos de Países 🌍')
 
+# Configuración de navegación
 st.sidebar.title("Navegación")
 pagina = st.sidebar.radio("Selecciona una página", ["Descripción", "Interacción con Datos", "Gráficos Interactivos"])
 
 if pagina == "Descripción":
-    st.title("Descripción del Proyecto")
+    st.markdown("### **Descripción del Proyecto**")
     st.write("""
     Esta aplicación web utiliza datos de la API [REST Countries](https://restcountries.com/v3.1/all).
-    Permite explorar información sobre países, incluyendo su población, área, idiomas, fronteras y más.
-    La aplicación está dividida en tres secciones principales:
+    Permite explorar información sobre países, incluyendo población, área, idiomas, fronteras y más.
+    La aplicación está dividida en tres secciones:
     - **Descripción**: Información sobre el proyecto y la fuente de datos.
-    - **Interacción con Datos**: Visualiza y filtra los datos obtenidos.
-    - **Gráficos Interactivos**: Crea gráficos dinámicos basados en los datos.
+    - **Interacción con Datos**: Visualiza, filtra y exporta datos.
+    - **Gráficos Interactivos**: Genera gráficos dinámicos basados en los datos.
     """)
 
 elif pagina == "Interacción con Datos":
-    st.title("Interacción con Datos")
+    st.markdown("### **Interacción con Datos**")
+
     st.subheader("Datos Originales")
     if st.checkbox('Mostrar datos originales'):
         st.dataframe(df)
@@ -56,9 +65,11 @@ elif pagina == "Interacción con Datos":
     st.subheader("Estadísticas")
     columna_estadisticas = st.selectbox("Selecciona una columna numérica para calcular estadísticas", ["Población Total", "Área en km²"])
     if columna_estadisticas:
-        st.write(f"**Media**: {df[columna_estadisticas].mean():,.2f}")
-        st.write(f"**Mediana**: {df[columna_estadisticas].median():,.2f}")
-        st.write(f"**Desviación Estándar**: {df[columna_estadisticas].std():,.2f}")
+        st.markdown(f"""
+        - **Media:** {df[columna_estadisticas].mean():,.2f}  
+        - **Mediana:** {df[columna_estadisticas].median():,.2f}  
+        - **Desviación Estándar:** {df[columna_estadisticas].std():,.2f}
+        """)
 
     st.subheader("Ordenar Datos")
     columna_ordenar = st.selectbox("Selecciona una columna para ordenar", df.columns)
@@ -68,7 +79,6 @@ elif pagina == "Interacción con Datos":
         st.dataframe(df_ordenado)
 
     st.subheader("Filtrar por Población")
-    valor_filtro = st.slider("Selecciona un valor para filtrar la población total", 0, int(df["Población Total"].max()), 100000)
     rango_min, rango_max = st.slider("Selecciona un rango de población", int(df["Población Total"].min()), int(df["Población Total"].max()), (0, int(df["Población Total"].max())))
     df_filtrado = df[(df["Población Total"] >= rango_min) & (df["Población Total"] <= rango_max)]
     st.dataframe(df_filtrado)
@@ -78,11 +88,12 @@ elif pagina == "Interacción con Datos":
         st.download_button('Descargar CSV', csv, 'datos_filtrados.csv', 'text/csv')
 
 elif pagina == "Gráficos Interactivos":
-    st.title("Gráficos Interactivos")
+    st.markdown("### **Gráficos Interactivos**")
+    
     st.subheader("Configurar Gráfico")
     x_var = st.selectbox("Eje X", ["Población Total", "Área en km²", "Número de Fronteras", "Número de Idiomas Oficiales", "Número de Zonas Horarias"])
     y_var = st.selectbox("Eje Y", ["Población Total", "Área en km²", "Número de Fronteras", "Número de Idiomas Oficiales", "Número de Zonas Horarias"])
-    tipo_grafico = st.selectbox("Tipo de Gráfico", ["Dispersión", "Línea", "Barras"])
+    tipo_grafico = st.selectbox("Tipo de Gráfico", ["Dispersión", "Línea", "Barras", "Pastel"])
 
     fig, ax = plt.subplots()
     if tipo_grafico == "Dispersión":
@@ -91,6 +102,8 @@ elif pagina == "Gráficos Interactivos":
         ax.plot(df[x_var], df[y_var], marker='o')
     elif tipo_grafico == "Barras":
         ax.bar(df[x_var], df[y_var])
+    elif tipo_grafico == "Pastel" and x_var != y_var:
+        ax.pie(df[y_var], labels=df[x_var], autopct='%1.1f%%')
 
     ax.set_xlabel(x_var)
     ax.set_ylabel(y_var)
@@ -101,4 +114,3 @@ elif pagina == "Gráficos Interactivos":
     fig.savefig(buffer, format="png")
     buffer.seek(0)
     st.download_button("Descargar Gráfico", buffer, file_name="grafico.png")
-
