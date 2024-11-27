@@ -4,7 +4,6 @@ import streamlit as st
 import matplotlib.pyplot as plt
 import io
 
-# Configuración para diseño adaptable
 st.set_page_config(layout="wide")
 
 def obtener_datos_paises():
@@ -33,14 +32,11 @@ def convertir_a_dataframe(paises):
         })
     return pd.DataFrame(datos)
 
-# Obtención y procesamiento de datos
 paises = obtener_datos_paises()
 df = convertir_a_dataframe(paises)
 
-# Título principal
 st.title('Análisis de Datos de Países 🌍')
 
-# Configuración de navegación
 st.sidebar.title("Navegación")
 pagina = st.sidebar.radio("Selecciona una página", ["Descripción", "Interacción con Datos", "Gráficos Interactivos"])
 
@@ -93,7 +89,7 @@ elif pagina == "Gráficos Interactivos":
     st.subheader("Configurar Gráfico")
     x_var = st.selectbox("Eje X", ["Población Total", "Área en km²", "Número de Fronteras", "Número de Idiomas Oficiales", "Número de Zonas Horarias"])
     y_var = st.selectbox("Eje Y", ["Población Total", "Área en km²", "Número de Fronteras", "Número de Idiomas Oficiales", "Número de Zonas Horarias"])
-    tipo_grafico = st.selectbox("Tipo de Gráfico", ["Dispersión", "Línea", "Barras", "Pastel"])
+    tipo_grafico = st.selectbox("Tipo de Gráfico", ["Dispersión", "Línea", "Barras"])
 
     fig, ax = plt.subplots()
     if tipo_grafico == "Dispersión":
@@ -102,8 +98,6 @@ elif pagina == "Gráficos Interactivos":
         ax.plot(df[x_var], df[y_var], marker='o')
     elif tipo_grafico == "Barras":
         ax.bar(df[x_var], df[y_var])
-    elif tipo_grafico == "Pastel" and x_var != y_var:
-        ax.pie(df[y_var], labels=df[x_var], autopct='%1.1f%%')
 
     ax.set_xlabel(x_var)
     ax.set_ylabel(y_var)
