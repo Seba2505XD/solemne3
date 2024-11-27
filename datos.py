@@ -5,8 +5,8 @@ import matplotlib.pyplot as plt
 import io
 
 def obtener_datos_paises():
-    url = 'urlprovisoria.csv'
-    respuesta = requests.get(url)
+    archivo = 'urlprovisoria.csv'
+    respuesta = requests.get(archivo)
     if respuesta.status_code == 200:
         return respuesta.json()
     else:
