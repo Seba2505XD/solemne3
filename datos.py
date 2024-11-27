@@ -6,7 +6,7 @@ import io
 
 def obtener_datos_paises():
     url = 'https://restcountries.com/v3.1/all'
-    respuesta = requests.get()
+    respuesta = requests.get(url)
     if respuesta.status_code == 200:
         return respuesta.json()
     else:
