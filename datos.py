@@ -91,6 +91,19 @@ elif pagina == "Gráficos Interactivos":
     y_var = st.selectbox("Eje Y", ["Población Total", "Área en km²", "Número de Fronteras", "Número de Idiomas Oficiales", "Número de Zonas Horarias"])
     tipo_grafico = st.selectbox("Tipo de Gráfico", ["Dispersión", "Línea", "Barras"])
 
+    # Configuración de rango personalizado
+    st.subheader("Rango Personalizado para Ejes")
+    rango_x_min, rango_x_max = st.slider(
+        f"Selecciona el rango para el eje X ({x_var})",
+        float(df[x_var].min()), float(df[x_var].max()),
+        (float(df[x_var].min()), float(df[x_var].max()))
+    )
+    rango_y_min, rango_y_max = st.slider(
+        f"Selecciona el rango para el eje Y ({y_var})",
+        float(df[y_var].min()), float(df[y_var].max()),
+        (float(df[y_var].min()), float(df[y_var].max()))
+    )
+
     fig, ax = plt.subplots()
     if tipo_grafico == "Dispersión":
         ax.scatter(df[x_var], df[y_var], alpha=0.7)
@@ -99,6 +112,9 @@ elif pagina == "Gráficos Interactivos":
     elif tipo_grafico == "Barras":
         ax.bar(df[x_var], df[y_var])
 
+
+    ax.set_xlim(rango_x_min, rango_x_max)
+    ax.set_ylim(rango_y_min, rango_y_max)
     ax.set_xlabel(x_var)
     ax.set_ylabel(y_var)
     ax.set_title(f"{tipo_grafico} entre {x_var} y {y_var}")
@@ -108,3 +124,4 @@ elif pagina == "Gráficos Interactivos":
     fig.savefig(buffer, format="png")
     buffer.seek(0)
     st.download_button("Descargar Gráfico", buffer, file_name="grafico.png")
+
