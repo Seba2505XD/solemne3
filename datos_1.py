@@ -4,17 +4,16 @@ import streamlit as st
 import matplotlib.pyplot as plt
 import io
 
-# Función para obtener datos de países
+
 def obtener_datos_paises():
     url = 'https://restcountries.com/v3.1/all'
     respuesta = requests.get(url)
     if respuesta.status_code == 200:
         return respuesta.json()
-    else:
-        st.error(f'Error: {respuesta.status_code}')
-        return []
+    st.error("No se pudo obtener información de la API.")
+    return []
 
-# Función para convertir datos a DataFrame
+
 def convertir_a_dataframe(paises):
     datos = []
     for pais in paises:
@@ -29,16 +28,14 @@ def convertir_a_dataframe(paises):
         })
     return pd.DataFrame(datos)
 
-# Obtención e inicialización de datos
+
 paises = obtener_datos_paises()
 df = convertir_a_dataframe(paises)
 
-# Título principal de la aplicación
-st.title('Análisis de Datos de Países')
 
-# Barra lateral para navegación
 st.sidebar.title("Navegación")
 pagina = st.sidebar.radio("Selecciona una página", ["Descripción", "Interacción con Datos", "Gráficos Interactivos"])
+
 
 if pagina == "Descripción":
     st.title("Descripción del Proyecto")
@@ -51,42 +48,50 @@ if pagina == "Descripción":
     - **Gráficos Interactivos**: Crea gráficos dinámicos basados en los datos.
     """)
 
+
 elif pagina == "Interacción con Datos":
     st.title("Interacción con Datos")
+
+
     st.subheader("Datos Originales")
-    if st.checkbox('Mostrar datos originales'):
-        st.dataframe(df)
+    st.dataframe(df)
+
 
     st.subheader("Estadísticas")
-    columna_estadisticas = st.selectbox("Selecciona una columna numérica para calcular estadísticas", ["Población Total", "Área en km²"])
-    if columna_estadisticas:
-        st.write(f"**Media**: {df[columna_estadisticas].mean():,.2f}")
-        st.write(f"**Mediana**: {df[columna_estadisticas].median():,.2f}")
-        st.write(f"**Desviación Estándar**: {df[columna_estadisticas].std():,.2f}")
+    columna = st.selectbox("Selecciona una columna numérica para calcular estadísticas", ["Población Total", "Área en km²"])
+    if columna:
+        st.write(f"**Media**: {df[columna].mean():,.2f}")
+        st.write(f"**Mediana**: {df[columna].median():,.2f}")
+        st.write(f"**Desviación Estándar**: {df[columna].std():,.2f}")
+
 
     st.subheader("Ordenar Datos")
-    columna_ordenar = st.selectbox("Selecciona una columna para ordenar", df.columns)
+    columna_orden = st.selectbox("Selecciona una columna para ordenar", df.columns)
     orden = st.radio("Orden", ["Ascendente", "Descendente"])
-    if columna_ordenar:
-        df_ordenado = df.sort_values(by=columna_ordenar, ascending=(orden == "Ascendente"))
-        st.dataframe(df_ordenado)
+    df_ordenado = df.sort_values(by=columna_orden, ascending=(orden == "Ascendente"))
+    st.dataframe(df_ordenado)
+
 
     st.subheader("Filtrar por Población")
-    valor_filtro = st.slider("Selecciona un valor para filtrar la población total", 0, int(df["Población Total"].max()), 100000)
     rango_min, rango_max = st.slider("Selecciona un rango de población", int(df["Población Total"].min()), int(df["Población Total"].max()), (0, int(df["Población Total"].max())))
     df_filtrado = df[(df["Población Total"] >= rango_min) & (df["Población Total"] <= rango_max)]
     st.dataframe(df_filtrado)
 
-    if st.button('Descargar datos filtrados'):
-        csv = df_filtrado.to_csv(index=False)
-        st.download_button('Descargar CSV', csv, 'datos_filtrados.csv', 'text/csv')
+
+    st.download_button("Descargar Datos Filtrados", df_filtrado.to_csv(index=False), "datos_filtrados.csv")
+
 
 elif pagina == "Gráficos Interactivos":
     st.title("Gráficos Interactivos")
+
+
     st.subheader("Configurar Gráfico")
     x_var = st.selectbox("Eje X", ["Población Total", "Área en km²", "Número de Fronteras", "Número de Idiomas Oficiales", "Número de Zonas Horarias"])
     y_var = st.selectbox("Eje Y", ["Población Total", "Área en km²", "Número de Fronteras", "Número de Idiomas Oficiales", "Número de Zonas Horarias"])
+
+
     tipo_grafico = st.selectbox("Tipo de Gráfico", ["Dispersión", "Línea", "Barras"])
+
 
     fig, ax = plt.subplots()
     if tipo_grafico == "Dispersión":
@@ -100,6 +105,7 @@ elif pagina == "Gráficos Interactivos":
     ax.set_ylabel(y_var)
     ax.set_title(f"{tipo_grafico} entre {x_var} y {y_var}")
     st.pyplot(fig)
+
 
     buffer = io.BytesIO()
     fig.savefig(buffer, format="png")
