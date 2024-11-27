@@ -4,7 +4,7 @@ import streamlit as st
 import matplotlib.pyplot as plt
 import io
 
-def obtener_datos_paises():
+def obtener_datos_paises(url):
     url = 'https://restcountries.com/v3.1/all'
     respuesta = requests.get(url)
     if respuesta.status_code == 200:
